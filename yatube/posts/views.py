@@ -128,8 +128,9 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     not_me = request.user.username != username
-    followed = Follow.objects.filter(user=request.user, 
-        author=get_object_or_404(User, username=username)).exists()
+    followed = Follow.objects.filter(
+        user=request.user, author=get_object_or_404(
+            User, username=username)).exists()
     if not_me and not followed:
         Follow.objects.create(
             user=request.user,
