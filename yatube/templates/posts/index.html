@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Последние обновления на сайте
+{% endblock %}
+
+{% block content %}
+  <div class="container py-5">
+    {% include 'includes/switcher.html' %}
+    <h1>
+      Последние обновления на сайте
+    </h1>
+    {% load cache %}
+    {% cache 20 index_page page_obj.number %}
+      {% for char in page_obj.object_list %}
+        {% include '../includes/post_card.html' with post=char %}
+        {% if not forloop.last %}
+            <hr>
+            <!-- под последним постом нет линии -->
+        {% endif %}
+      {% empty %}
+        <p>
+          На <span style="color:red">Ya</span>tube еще нет постов. 
+          Но ты можешь написать первый!
+        </p>
+      {% endfor %}
+      {% include '../includes/paginator.html' with page_obj=page_obj %}
+    {% endcache %}
+  </div>
+{% endblock %}
