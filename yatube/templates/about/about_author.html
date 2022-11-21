@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Об авторе проекта{% endblock %}
+{% block content %}
+  {% load static %}
+      <div class="container py-5" style="width: 55%;">
+        <div class="row">
+          <aside class="col-12 col-md-5">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <ul>
+                  <li> 26 лет</li>
+                </ul>
+              </li>               
+              <li class="list-group-item">
+                <ul>
+                  <li> знак зодиака - Рак</li>
+                </ul>
+              </li>            
+              <li class="list-group-item">
+                <ul>
+                  <li> дипломированный инженер-проектировщик</li>
+                </ul>
+              </li>
+              <li class="list-group-item">
+                <ul>
+                  <li> написала настольную игру на Unity</li>
+                </ul>
+              </li>
+              <li class="list-group-item">
+                <ul>
+                  <li> веду Youtube-канал о планировании</li>
+                </ul>
+              </li>
+            </ul>
+          </aside>
+          <article class="col-12 col-md-7" style="text-align: center;">
+            <h1>Привет, я Лия!</h1>
+            <h1>✨🥳🐣</h1>     
+          </article>
+        </div>
+        <br>
+        <figure style="width: 100%; text-align:center; border: 1px solid #333; padding: 7px; margin: 10px 0 5px 5px; background: #f0f0f0;">
+          <p><img src="{% static 'img/cats.jpg' %}" width="800" height="599" alt="Тут должны быть коты"></p>
+          <figcaption style="margin: 0 auto 5px;">
+            Главные помошники в любых делах. Нюша (слева) и Ромашка (справа). 
+            Нам 6 лет и уже месяц как они - домашние котики!
+            <br>
+            Мы толстенькие котики, так что врач сказал сидеть на диете 😭
+          </figcaption>
+        </figure>
+        <br>
+        <p>
+          Я учусь на 50 потоке курса Python-разработчик от Яндекс-Практикума.
+          И этот сайт - задание 4 спринта. Осталось ещё 7 и диплом - пожелайте мне удачи :)
+        </p>
+      </div>
+        <div class="container py-5" style="width: 50%;">
+        <div class="row" style="width: 100%;">
+          <aside class="col-12 col-md-6">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h2 style="text-align: center;">💚 Люблю 💚</h2>
+              </li>               
+              <li class="list-group-item">
+                <ul>
+                  <li> котиков 🐈</li>
+                  <li> чайную церемонию 🍃</li>
+                  <li> сладости 🍰</li>
+                  <li> снег ⛄</li>
+                  <li> Green Apelsin 🎵</li>
+                  <li> ворчать как бабка :) 👵</li>
+                </ul>
+              </li>            
+            </ul>
+          </aside>
+          <aside class="col-12 col-md-6">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h2 style="text-align: center;">❌Не люблю❌</h2>
+              </li>               
+              <li class="list-group-item">
+                <ul>
+                  <li> кофе</li>
+                  <li> обсуждения политики</li>
+                  <li> лето</li>
+                  <li> табачный дым (аллергия)</li>
+                  <li> поездки на машине</li>
+                </ul>
+              </li>            
+            </ul>
+          </aside>
+        </div>
+      </div>
+{% endblock %}

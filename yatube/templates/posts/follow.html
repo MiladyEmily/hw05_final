@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Избранные авторы
+{% endblock %}
+
+{% block content %}
+  <div class="container py-5">
+    {% include 'includes/switcher.html' %}
+    <h1>Избранные авторы</h1>
+    {% for char in page_obj.object_list %}
+      {% include '../includes/post_card.html' with post=char %}
+      {% if not forloop.last %}
+        <hr>
+        <!-- под последним постом нет линии -->
+      {% endif %}
+      {% empty %}
+      <p>
+        Ты пока не подписан ни на кого. Или они еще ничего не набложили :)
+        Пора посмотреть общую ленту и найти что-то интересное!
+      </p>
+    {% endfor %}
+    {% include '../includes/paginator.html' with page_obj=page_obj %}
+  </div>
+{% endblock %}
