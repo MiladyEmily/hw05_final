@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.db.models import UniqueConstraint
 
 from core.models import PubDateModel
 
@@ -46,9 +47,6 @@ class Post(PubDateModel):
     def __str__(self):
         return self.text[:POST_STR_LEN]
 
-    class Meta:
-        ordering = ['-pub_date']
-
 
 class Comment(PubDateModel):
     post = models.ForeignKey(
@@ -68,9 +66,6 @@ class Comment(PubDateModel):
         help_text='Введите текст комментария'
     )
 
-    class Meta:
-        ordering = ['-pub_date']
-
 
 class Follow(models.Model):
     user = models.ForeignKey(
@@ -85,3 +80,6 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Блоггер',
     )
+
+    class Meta:
+        UniqueConstraint(fields=['user', 'author'], name='unique_follow_pair')

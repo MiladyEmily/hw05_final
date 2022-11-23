@@ -65,7 +65,7 @@ class PostsURLTests(TestCase):
         }
         self.assertEqual(
             PostsURLTests.guest_client.get('/profile/HasNoName/').status_code,
-            200,
+            HTTPStatus.OK,
         )
         self.url_location_and_template(
             responses=responses,

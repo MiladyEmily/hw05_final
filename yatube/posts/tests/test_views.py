@@ -1,14 +1,20 @@
+import tempfile
+import shutil
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.conf import settings
 
 from ..models import Post, Group, Comment, Follow
 from ..forms import PostForm
 
 
 User = get_user_model()
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class PostsPagesTests(TestCase):
@@ -30,10 +36,11 @@ class PostsPagesTests(TestCase):
         cls.new_user = User.objects.create(username='TestUser')
         cls.new_authorized_client = Client()
         cls.new_authorized_client.force_login(cls.new_user)
-        cls.follow_relation = Follow.objects.create(
-            user=cls.new_user,
-            author=cls.author
-        )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -142,11 +149,7 @@ class PostsPagesTests(TestCase):
 
     def test_post_with_group(self):
         """добавление поста в БД при отправке формы"""
-        new_post = Post.objects.create(
-            author=PostsPagesTests.author,
-            text='Текст нового поста',
-            group=PostsPagesTests.group,
-        )
+        new_post = self.new_post_creation()
         pages_list = [
             reverse('posts:index'),
             reverse('posts:group_list',
@@ -167,11 +170,7 @@ class PostsPagesTests(TestCase):
             slug='test-group2',
             description='Это тестовая группа 2'
         )
-        new_post_with_group = Post.objects.create(
-            text='Тестовый текст нового поста',
-            group=PostsPagesTests.group,
-            author=PostsPagesTests.author,
-        )
+        new_post_with_group = self.new_post_creation()
         response = PostsPagesTests.authorized_client.get(reverse(
             'posts:group_list', kwargs={'group_condition': 'test-group2'}))
         self.assertTrue(
@@ -191,11 +190,7 @@ class PostsPagesTests(TestCase):
 
     def test_comment_not_in_other_post(self):
         """недобавление нового комментария на страницы других постов"""
-        new_post_with_group = Post.objects.create(
-            text='Тестовый текст нового поста',
-            group=PostsPagesTests.group,
-            author=PostsPagesTests.author,
-        )
+        new_post_with_group = self.new_post_creation()
         comment = Comment.objects.create(
             text='Тестовый коммент',
             author=PostsPagesTests.author,
@@ -211,32 +206,107 @@ class PostsPagesTests(TestCase):
         cache.clear()
         PostsPagesTests.authorized_client.get(
             reverse('posts:index'))
+        PostsPagesTests.post.delete()
         response = PostsPagesTests.authorized_client.get(
             reverse('posts:index'))
         self.assertContains(response, 'Текст поста 111')
+        cache.clear()
+        response = PostsPagesTests.authorized_client.get(
+            reverse('posts:index'))
+        self.assertNotContains(response, 'Текст поста 111')
 
     def test_follow(self):
         """можно подписаться на автора"""
+        PostsPagesTests.new_authorized_client.post(
+            reverse('posts:profile_follow',
+                    kwargs={'username': PostsPagesTests.author.username}))
         response = PostsPagesTests.new_authorized_client.get(
             reverse('posts:follow_index'))
         self.assertContains(response, 'Текст поста 111')
 
     def test_unfollow(self):
         """можно отписаться на автора"""
-        PostsPagesTests.follow_relation.delete()
+        self.new_relation_creation()
+        PostsPagesTests.new_authorized_client.post(
+            reverse('posts:profile_unfollow',
+                    kwargs={'username': PostsPagesTests.author.username}))
         response = PostsPagesTests.new_authorized_client.get(
             reverse('posts:follow_index'))
         self.assertNotContains(response, 'Текст поста 111')
 
     def test_new_post_only_for_followers(self):
-        """новый пост автора показывается только у тех, кто подписан"""
-        Post.objects.create(
-            author=PostsPagesTests.author,
-            text='Текст поста для подписчиков',
-        )
+        """новый пост автора показывается у тех, кто подписан"""
+        self.new_relation_creation()
+        self.new_post_creation()
         response = PostsPagesTests.new_authorized_client.get(
             reverse('posts:follow_index'))
         self.assertContains(response, 'Текст поста для подписчиков')
+
+    def test_new_post_not_for_nofollowers(self):
+        """новый пост автора не показывается у тех, кто не подписан"""
+        self.new_relation_creation()
+        self.new_post_creation()
         response = PostsPagesTests.authorized_client.get(
             reverse('posts:follow_index'))
         self.assertNotContains(response, 'Текст поста для подписчиков')
+
+    def test_comment_only_for_auth(self):
+        """комментарий может написат только авторизованный пользователь"""
+        guest_client = Client()
+        comments_count = PostsPagesTests.post.comments.count()
+        guest_client.post(
+            reverse('posts:post_detail', kwargs={'post_id': 0}),
+            data={'text': 'Коммент неавторизованного', },
+            follow=True
+        )
+        self.assertEqual(PostsPagesTests.post.comments.count(), comments_count)
+
+    def new_relation_creation(self):
+        return Follow.objects.create(
+            user=PostsPagesTests.new_user,
+            author=PostsPagesTests.author,
+        )
+
+    def new_post_creation(self):
+        return Post.objects.create(
+            author=PostsPagesTests.author,
+            text='Текст поста для подписчиков',
+            group=PostsPagesTests.group,
+        )
+
+    def test_post_image_on_pages(self):
+        """пост с картинкой отображается на всех нужных страницах"""
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif',
+        )
+        new_post_with_image = Post.objects.create(
+            text='Тестовый текст',
+            image=uploaded,
+            author=PostsPagesTests.author,
+            group=PostsPagesTests.group,
+        )
+        self.new_relation_creation()
+        responses = [
+            reverse('posts:index'),
+            reverse('posts:follow_index'),
+            reverse('posts:group_list',
+                    kwargs={'group_condition': 'test-group'}),
+            reverse('posts:post_detail',
+                    kwargs={'post_id': new_post_with_image.id}),
+            reverse('posts:profile',
+                    kwargs={'username': 'TestAuthor'})
+        ]
+        for page_name in responses:
+            with self.subTest(page_name=page_name):
+                response = PostsPagesTests.new_authorized_client.get(
+                    page_name)
+                self.assertContains(response, '<img')

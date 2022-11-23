@@ -15,6 +15,40 @@ User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
+class CommentCreateFormTest(TestCase):
+    def setUp(self):
+        self.author = User.objects.create(username='TestAuthor')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.author)
+        self.post = Post.objects.create(
+            author=self.author,
+            text='Текст базового поста',
+        )
+
+    def test_create_comment(self):
+        """Валидная форма создает запись в Comment."""
+        comments_count = self.post.comments.count()
+        form_data = {
+            'text': 'Это комментарий!',
+        }
+        response = self.authorized_client.post(
+            reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
+            data=form_data,
+            follow=True,
+        )
+        self.assertEqual(self.post.comments.count(), comments_count + 1)
+        self.assertRedirects(
+            response,
+            reverse('posts:post_detail', kwargs={'post_id': self.post.pk})
+        )
+        self.assertTrue(
+            Comment.objects.filter(
+                text='Это комментарий!',
+                author=self.author,
+            ).exists()
+        )
+
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostCreateFormTests(TestCase):
     def setUp(self):
@@ -88,28 +122,5 @@ class PostCreateFormTests(TestCase):
             Post.objects.filter(
                 text='Текст базового поста изменённый',
                 group=None,
-            ).exists()
-        )
-
-    def test_create_comment(self):
-        """Валидная форма создает запись в Comment."""
-        comments_count = self.post.comments.count()
-        form_data = {
-            'text': 'Это комментарий!',
-        }
-        response = self.authorized_client.post(
-            reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
-            data=form_data,
-            follow=True,
-        )
-        self.assertEqual(self.post.comments.count(), comments_count + 1)
-        self.assertRedirects(
-            response,
-            reverse('posts:post_detail', kwargs={'post_id': self.post.pk})
-        )
-        self.assertTrue(
-            Comment.objects.filter(
-                text='Это комментарий!',
-                author=self.author,
             ).exists()
         )

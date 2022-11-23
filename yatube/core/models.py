@@ -2,7 +2,7 @@ from django.db import models
 
 
 class PubDateModel(models.Model):
-    """Абстрактная модель. Добавляет дату создания."""
+    """Абстрактная модель. Добавляет дату создания и фильтр по ней."""
     pub_date = models.DateTimeField(
         'Дата публикации',
         auto_now_add=True,
@@ -11,3 +11,4 @@ class PubDateModel(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['-pub_date']

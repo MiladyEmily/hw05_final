@@ -32,10 +32,9 @@ def group_posts(request, group_condition):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     post_list = author.posts.all()
-    following = False
-    if request.user.is_authenticated:
-        following = Follow.objects.filter(
-            user=request.user, author=author).exists()
+    following = request.user.is_authenticated and (
+        Follow.objects.filter(
+            user=request.user, author=author).exists())
     context = {
         'author': author,
         'posts_count': author.posts.count(),
@@ -65,7 +64,7 @@ def post_detail(request, post_id):
 @login_required
 def add_comment(request, post_id):
     form = CommentForm(request.POST or None)
-    post = Post.objects.get(pk=post_id)
+    post = get_object_or_404(Post, pk=post_id)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
@@ -116,9 +115,7 @@ def post_edit(request, post_id):
 
 @login_required
 def follow_index(request):
-    follow_list = request.user.follower.all()
-    author_list = User.objects.filter(following__in=follow_list)
-    post_list = Post.objects.filter(author__in=author_list)
+    post_list = Post.objects.filter(author__following__user=request.user)
     context = {
         'page_obj': page_paginator(post_list, request),
     }
@@ -127,14 +124,12 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
-    not_me = request.user.username != username
-    followed = Follow.objects.filter(
-        user=request.user, author=get_object_or_404(
-            User, username=username)).exists()
-    if not_me and not followed:
-        Follow.objects.create(
+    author = get_object_or_404(User, username=username)
+    not_me = request.user != author
+    if not_me:
+        Follow.objects.get_or_create(
             user=request.user,
-            author=get_object_or_404(User, username=username)
+            author=author
         )
     return redirect('posts:profile', username)
 
