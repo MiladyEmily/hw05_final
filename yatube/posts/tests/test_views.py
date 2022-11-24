@@ -42,6 +42,19 @@ class PostsPagesTests(TestCase):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
+    def new_relation_creation(self):
+        return Follow.objects.create(
+            user=PostsPagesTests.new_user,
+            author=PostsPagesTests.author,
+        )
+
+    def new_post_creation(self):
+        return Post.objects.create(
+            author=PostsPagesTests.author,
+            text='Текст поста для подписчиков',
+            group=PostsPagesTests.group,
+        )
+
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         templates_pages_names = {
@@ -260,19 +273,6 @@ class PostsPagesTests(TestCase):
             follow=True
         )
         self.assertEqual(PostsPagesTests.post.comments.count(), comments_count)
-
-    def new_relation_creation(self):
-        return Follow.objects.create(
-            user=PostsPagesTests.new_user,
-            author=PostsPagesTests.author,
-        )
-
-    def new_post_creation(self):
-        return Post.objects.create(
-            author=PostsPagesTests.author,
-            text='Текст поста для подписчиков',
-            group=PostsPagesTests.group,
-        )
 
     def test_post_image_on_pages(self):
         """пост с картинкой отображается на всех нужных страницах"""

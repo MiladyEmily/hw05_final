@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.db.models import UniqueConstraint
 
 from core.models import PubDateModel
 
@@ -82,4 +81,7 @@ class Follow(models.Model):
     )
 
     class Meta:
-        UniqueConstraint(fields=['user', 'author'], name='unique_follow_pair')
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'author'],
+                                    name='unique_follow_pair')
+        ]
